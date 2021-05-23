@@ -274,4 +274,21 @@ main()
 
 为了保证虚表指针在基类(proper base class)构造时被设置为指向合适的虚表，一个关于虚表指针的表，被称作VTT，其存储着为一个完整类生成的用于构造和不用于构造的虚表的地址。完整类的构造函数为每个基类(proper base class)的构造函数传递一个指向VTT合适位置的指针，在这个位置基类(proper base class)的构造函数可以找到其所需的一组虚表。构造虚表在执行基类(proper base class)的析构函数时也以类似的方式使用。
 
-当一个完整对象构造函数正在构造一个虚基时，它必须
+当一个完整对象构造函数正在构造一个虚基时，它必须小心使用虚表中的虚基类偏移量(vbase offsets)，因为可能的共享vptr可能指向一个无关基类的构造虚表，例如在
+
+```c++
+struct S {};
+struct T: virtual S {};
+struct U {};
+struct V: virtual T, virtual U {};
+```
+
+中，V和T的vptr在同一位置。当V的构造函数要构造U时，这时这个vptr指向的是T的虚表，因此不能用来定位U。（一般完整类的构造函数直接静态确定不久行了？）
+
+### 2.6.2 VTT Order VTT顺序
+
+虚表地址的数组，被称作***VTT***，是为每个有直接或间接虚基类的类型声明的。（否则，每个基类(proper base class)可以通过完整类的虚表组(complete object table group)进行初始化。）
+
+类D的VTT数组的元素以如下顺序排列：
+
+1. *Primary virtual pointer*
