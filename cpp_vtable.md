@@ -291,4 +291,7 @@ struct V: virtual T, virtual U {};
 
 类D的VTT数组的元素以如下顺序排列：
 
-1. *Primary virtual pointer*
+1. *Primary virtual pointer*：完整类D的对象的主要虚表(primary virtual table)地址
+2. *Secondary VTTs*：对于每个需要VTT的类D的直接非虚基类B，以声明顺序，一个关于B-in-D的sub-VTT，结构类似类B的主VTT(main VTT)，有一个primary virtual pointer，secondary VTTs和secondary virtual pointers，但是没有virtual VTTs。（应该是用来在构造基类子对象的过程中使用的，且这个构造是递归进行的）
+3. *Secondary virtual pointers*：对每个(a)拥有虚基类或是可以从类D通过虚路径(virtual path)到达的，并且(b)不是一个非虚主要基类(primary base)的基类X，其代表X-in-D的虚表地址或是一个合适的构造虚表的地址。<br><br>类X可以从类D通过虚路径到达，如果在继承图(inheritance graph)存在一条路径X，B1，B2，……，BN，D，其中X，B1，B2，……，BN至少有一个是虚基类。<br><br>VTT中虚指针的顺序是继承图的先序(inheritance grph preorder)。<br><br>直接和间接的基类都有虚指针。虽然对于非虚的主要基类(primary non-virtual bases)它们没有次要虚指针(secondary virtual pointers)，但是它们并不影响虚指针的排列顺序。<br><br>主要虚基类(primary virtual bases)在VTT中要有次要虚指针(secondary virtual pointer)，因为与它们共享虚指针的子类是由层次中最被衍生的类(the most derived class in hierarchy)决定的。<br><br>不需要secondary VTTs的基类可能需要次要虚指针(secondary virtual pointers)。一个自己没有虚基类的虚基类不需要VTT，但是它还是需要在VTT中有一个虚指针项。
+4. *Virtual VTTs*：对于每一个其它虚基类(proper virtual base classes)，为它们构造像2那样的相应的sub-VTT，这些sub-VTTs以继承图的先序(inheritance grph preorder)排列。<br><br>Virtual VTTs放在最后是因为它们只会传递给完整对象的虚基类构造函数。
